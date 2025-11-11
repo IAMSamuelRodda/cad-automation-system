@@ -1,11 +1,10 @@
 """Unit tests for mounting bracket template."""
 
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 import pytest
 from build123d import Part
-
 from cad_automation.templates.mounting_bracket import (
     MountingBracketParams,
     MountingBracketTemplate,

@@ -3,8 +3,7 @@
 from build123d import *
 from ezdxf import new
 from ezdxf.document import Drawing
-from ezdxf.enums import TextEntityAlignment
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from .base import BaseTemplate, TemplateParams
 
@@ -50,13 +49,13 @@ class MountingBracketTemplate(BaseTemplate):
         """Generate 3D L-bracket (90-degree angle)."""
         with BuildPart() as bracket:
             # Create vertical plate
-            with BuildSketch() as vertical_sketch:
+            with BuildSketch():
                 Rectangle(params.width, params.height)
 
             extrude(amount=params.thickness)
 
             # Create horizontal plate
-            with BuildSketch(Plane.XY.offset(0)) as horizontal_sketch:
+            with BuildSketch(Plane.XY.offset(0)):
                 Rectangle(params.width, params.height)
 
             extrude(amount=params.thickness)
@@ -67,9 +66,7 @@ class MountingBracketTemplate(BaseTemplate):
                 x_pos = -params.width / 2 + i * hole_spacing
                 y_pos = params.height / 2
 
-                with BuildSketch(
-                    Plane.XY.offset(params.thickness / 2)
-                ) as hole_sketch:
+                with BuildSketch(Plane.XY.offset(params.thickness / 2)):
                     with Locations((x_pos, y_pos)):
                         Circle(params.hole_diameter / 2)
 
@@ -80,7 +77,7 @@ class MountingBracketTemplate(BaseTemplate):
                 x_pos = -params.width / 2 + i * hole_spacing
                 y_pos = -params.height / 2
 
-                with BuildSketch(Plane.XY.offset(params.thickness / 2)) as hole_sketch:
+                with BuildSketch(Plane.XY.offset(params.thickness / 2)):
                     with Locations((x_pos, y_pos)):
                         Circle(params.hole_diameter / 2)
 
@@ -92,7 +89,7 @@ class MountingBracketTemplate(BaseTemplate):
         """Generate 3D flat bracket (single plate)."""
         with BuildPart() as bracket:
             # Create flat plate
-            with BuildSketch() as plate_sketch:
+            with BuildSketch():
                 Rectangle(params.width, params.height)
 
             extrude(amount=params.thickness)
@@ -103,9 +100,7 @@ class MountingBracketTemplate(BaseTemplate):
                 x_pos = -params.width / 2 + i * hole_spacing
                 y_pos = 0
 
-                with BuildSketch(
-                    Plane.XY.offset(params.thickness / 2)
-                ) as hole_sketch:
+                with BuildSketch(Plane.XY.offset(params.thickness / 2)):
                     with Locations((x_pos, y_pos)):
                         Circle(params.hole_diameter / 2)
 
@@ -209,7 +204,7 @@ class MountingBracketTemplate(BaseTemplate):
         x0, y0 = front_origin
 
         # Width dimension (above front view)
-        dim = msp.add_linear_dim(
+        msp.add_linear_dim(
             base=(x0 + params.width / 2, y0 + params.height + 10),
             p1=(x0, y0 + params.height + 5),
             p2=(x0 + params.width, y0 + params.height + 5),
@@ -218,7 +213,7 @@ class MountingBracketTemplate(BaseTemplate):
         )
 
         # Height dimension (right of front view)
-        dim = msp.add_linear_dim(
+        msp.add_linear_dim(
             base=(x0 + params.width + 10, y0 + params.height / 2),
             p1=(x0 + params.width + 5, y0),
             p2=(x0 + params.width + 5, y0 + params.height),
@@ -239,9 +234,7 @@ class MountingBracketTemplate(BaseTemplate):
             },
         )
 
-    def _add_title_block(
-        self, doc: Drawing, msp, params: MountingBracketParams
-    ) -> None:
+    def _add_title_block(self, doc: Drawing, msp, params: MountingBracketParams) -> None:
         """Add simplified AS 1100 title block."""
         # AS 1100.101 title block location: bottom right corner
         # A4 landscape: 297x210mm, border 20mm left, 10mm others
