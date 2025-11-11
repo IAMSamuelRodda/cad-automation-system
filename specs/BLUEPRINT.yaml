@@ -1,0 +1,2731 @@
+project_overview:
+  brief: "Automated CAD drawing generation system that converts user specifications into AS 1100 compliant manufacturing drawings (STEP/DXF format) for mechanical components, using template-based generation with build123d and ezdxf."
+  core_objectives:
+    - "Generate AS 1100.101/201 compliant CAD drawings (STEP/DXF) from structured parameters with 90%+ accuracy for template-based generation"
+    - "Achieve 60%+ automated AS 1100 validation coverage in MVP, expanding to 70%+ in production"
+    - "Enable natural language specification extraction via LLM integration with 80%+ parameter extraction accuracy"
+    - "Support iterative refinement loop with compliance scoring (0-100%) and automated correction for simple violations"
+  complexity: "complex"
+  budget: "$300 MVP, $500/month operational for Milestones 2-3"
+  development_multiplier: "20x (AI coding agents)"
+
+architecture:
+  pattern: "vertical-slice"
+  rationale: "Each feature (templates, validators, LLM extraction) is self-contained with minimal cross-dependencies, enabling parallel agent development. Template system naturally slices by component type (brackets, plates, shafts). Validation engine slices by AS 1100 standard sections."
+  components:
+    - name: "CAD Generation Engine"
+      purpose: "Template-based parametric CAD generation using build123d (3D) and ezdxf (2D)"
+      boundaries: "In: Template classes, parameter schemas, STEP/DXF export. Out: AI-generated novel geometries (Milestone 3), file storage"
+      dependencies: ["build123d", "ezdxf", "OCP/OpenCascade"]
+      token_estimate: "<15k per template"
+
+    - name: "AS 1100 Validation Engine"
+      purpose: "Rule-based compliance validation for AS 1100.101 (general) and AS 1100.201 (mechanical)"
+      boundaries: "In: Sheet layout, line standards, dimensioning, projections, symbols. Out: Manufacturing process validation, industry-specific rules (mining, construction)"
+      dependencies: ["ezdxf for DXF parsing", "CAD engine outputs"]
+      token_estimate: "<20k per validator module"
+
+    - name: "Parameter Extraction Layer"
+      purpose: "Extract component parameters from structured JSON (MVP) and natural language (Milestone 2)"
+      boundaries: "In: JSON schemas, LLM API integration, validation. Out: Complex multi-component assemblies"
+      dependencies: ["Claude Haiku API (future)", "JSON schema validators"]
+      token_estimate: "<10k"
+
+    - name: "User Interface"
+      purpose: "CLI (MVP) and web UI (Milestone 2) for specification input and output delivery"
+      boundaries: "In: Parameter input, template selection, output downloads. Out: Complex CAD visualization, 3D preview"
+      dependencies: ["FastAPI (Milestone 2)", "CLI argparse (MVP)"]
+      token_estimate: "<12k CLI, <25k web UI"
+
+    - name: "Storage & Database"
+      purpose: "Persist user submissions, generated drawings, version history"
+      boundaries: "In: SQLite (MVP/Milestone 2), file storage. Out: User authentication, multi-tenancy (Milestone 3)"
+      dependencies: ["SQLite", "filesystem"]
+      token_estimate: "<8k"
+
+milestones:
+  milestone_1:
+    name: "v1.0 MVP - Template-Based CAD Engine"
+    timeline_weeks: "1-4"
+    description: "Proof of concept with 5-10 mechanical component templates, basic AS 1100 validation (60%+ coverage), CLI interface. Budget: $300 for LLM API experimentation."
+    success_criteria:
+      - "5 templates (mounting bracket, plate, shaft, spacer, simple housing) generate valid STEP/DXF files"
+      - "AS 1100 validator achieves 60%+ automated coverage (sheet layout, line standards, dimensioning)"
+      - "Compliance score (0-100%) calculated for all generated drawings"
+      - "CLI interface accepts JSON parameters and outputs files with compliance report"
+      - "90%+ accuracy for template-based generation (manual verification)"
+      - "Complete documentation: README, QUICKSTART, AS 1100 reference, template usage guides"
+
+    epics:
+      epic_1:
+        name: "Project Foundation"
+        weeks: "1"
+        milestone: "Repository initialized with Python environment (uv), CI/CD basics, documentation structure"
+
+        feature_1_1:
+          name: "Repository Setup & Environment"
+          complexity:
+            composite: 1.8
+            dimensions:
+              technical_complexity: 2
+              scope_size: 2
+              dependencies: 1
+              uncertainty: 2
+              risk: 2
+              testing: 2
+          estimated_days: 2
+          deliverables:
+            - "Git repository with .gitignore, README, LICENSE (LGPL compatibility)"
+            - "Python 3.11+ virtual environment with uv package manager"
+            - "pyproject.toml with dependencies: build123d, ezdxf, pytest"
+
+          task_1_1_1:
+            name: "Initialize repository and git configuration"
+            complexity:
+              composite: 1.3
+            estimated_days: 0.5
+            deliverables:
+              - "Repository created at ~/repos/cad-automation-system"
+              - ".gitignore configured for Python, CAD outputs, secrets"
+              - "LICENSE file (MIT or LGPL-compatible)"
+
+          task_1_1_2:
+            name: "Setup Python environment with uv"
+            complexity:
+              composite: 1.5
+            estimated_days: 0.5
+            deliverables:
+              - "Python 3.11+ virtual environment at .venv/"
+              - "uv configured for package management"
+              - "pyproject.toml with project metadata"
+
+          task_1_1_3:
+            name: "Install core dependencies"
+            complexity:
+              composite: 2.0
+            estimated_days: 1
+            deliverables:
+              - "build123d, ezdxf, OCP installed and verified"
+              - "pytest, black, ruff for testing and linting"
+              - "Dependency version pinning strategy"
+
+        feature_1_2:
+          name: "Documentation Structure"
+          complexity:
+            composite: 2.0
+            dimensions:
+              technical_complexity: 2
+              scope_size: 2
+              dependencies: 1
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 2
+          deliverables:
+            - "README.md with project overview, quick start, architecture diagram"
+            - "docs/ directory with AS 1100 reference materials"
+            - "QUICKSTART.md for 5-minute setup guide"
+
+          task_1_2_1:
+            name: "Create README and project overview"
+            complexity:
+              composite: 1.8
+            estimated_days: 1
+            deliverables:
+              - "README with problem statement, features, tech stack"
+              - "Architecture diagram showing components"
+              - "Installation instructions"
+
+          task_1_2_2:
+            name: "Setup AS 1100 reference documentation"
+            complexity:
+              composite: 2.2
+            estimated_days: 1
+            deliverables:
+              - "docs/as1100/ with AS 1100.101 and AS 1100.201 summaries"
+              - "Compliance checklist for validators"
+              - "Example drawings with annotations"
+
+        feature_1_3:
+          name: "CI/CD Basics"
+          complexity:
+            composite: 2.3
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 2
+          deliverables:
+            - "GitHub Actions workflow for tests"
+            - "Pre-commit hooks for linting (black, ruff)"
+            - "Test coverage reporting"
+
+          task_1_3_1:
+            name: "Setup GitHub Actions for pytest"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - ".github/workflows/test.yml running pytest on push"
+              - "Coverage report generated with pytest-cov"
+              - "Python 3.11 matrix testing"
+
+          task_1_3_2:
+            name: "Configure pre-commit hooks"
+            complexity:
+              composite: 2.0
+            estimated_days: 0.5
+            deliverables:
+              - ".pre-commit-config.yaml with black, ruff"
+              - "pre-commit installed in local repo"
+
+      epic_2:
+        name: "CAD Generation Engine"
+        weeks: "1-2"
+        milestone: "Template system with 5 mechanical components generating valid STEP/DXF files"
+
+        feature_2_1:
+          name: "Template System Architecture"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 3
+              risk: 3
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "Base template abstract class with parameter validation"
+            - "Parameter schema system (Pydantic models)"
+            - "Template registry for discovery and instantiation"
+
+          task_2_1_1:
+            name: "Design base template abstract class"
+            complexity:
+              composite: 3.2
+            estimated_days: 2
+            deliverables:
+              - "cad_engine/templates/base.py with AbstractTemplate"
+              - "Methods: validate_params(), generate_3d(), generate_2d(), export_step(), export_dxf()"
+              - "Hooks for AS 1100 compliance integration"
+
+          task_2_1_2:
+            name: "Implement parameter schema system"
+            complexity:
+              composite: 2.8
+            estimated_days: 1.5
+            deliverables:
+              - "Pydantic models for common parameter types (length, angle, material)"
+              - "JSON schema generation for documentation"
+              - "Validation error handling with user-friendly messages"
+
+          task_2_1_3:
+            name: "Create template registry"
+            complexity:
+              composite: 2.5
+            estimated_days: 0.5
+            deliverables:
+              - "cad_engine/templates/registry.py with decorator @register_template"
+              - "Template discovery by name or category"
+              - "List available templates CLI command"
+
+        feature_2_2:
+          name: "build123d 3D CAD Integration"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 5
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 4
+              risk: 3
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "build123d wrapper utilities for common operations"
+            - "3D geometry generation for 5 templates"
+            - "STEP file export with metadata"
+
+          task_2_2_1:
+            name: "Create build123d utility library"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "cad_engine/build123d_utils.py with helper functions"
+              - "Functions: create_box(), create_cylinder(), fillet_edges(), array_pattern()"
+              - "Unit tests for geometry primitives"
+
+          task_2_2_2:
+            name: "Implement STEP export with metadata"
+            complexity:
+              composite: 3.2
+            estimated_days: 1.5
+            deliverables:
+              - "STEP exporter using OCP/OpenCascade"
+              - "Metadata embedding: part name, material, generated timestamp"
+              - "Validation: ensure file opens in FreeCAD"
+
+          task_2_2_3:
+            name: "Build 3D template geometries"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (5) and scope size (4) - each template requires unique parametric logic"
+            estimated_days: 1.5
+            deliverables:
+              - "3D geometry generation for mounting bracket, plate, shaft, spacer, simple housing"
+              - "Parametric constraints (min/max dimensions, fillet radii)"
+            status: "flagged_for_breakdown"
+
+        feature_2_3:
+          name: "ezdxf 2D CAD Integration"
+          complexity:
+            composite: 3.2
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 3
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "ezdxf wrapper for AS 1100 compliant sheet layout"
+            - "2D projection generation from 3D models"
+            - "DXF export with layers and line types"
+
+          task_2_3_1:
+            name: "Create AS 1100 sheet layout templates"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "cad_engine/sheet_layout.py with AS 1100.101 compliant templates"
+              - "Sheet sizes: A4, A3, A2, A1 (210x297mm to 594x841mm)"
+              - "Title block with fields: part name, drawing number, scale, date, drawn by"
+              - "Border lines (0.7mm thick continuous line)"
+
+          task_2_3_2:
+            name: "Implement 2D projection generation"
+            complexity:
+              composite: 3.8
+            estimated_days: 1.5
+            deliverables:
+              - "Orthographic projection: front, top, side views"
+              - "View placement with appropriate spacing"
+              - "Hidden line rendering (dashed lines for hidden edges)"
+
+          task_2_3_3:
+            name: "DXF export with AS 1100 layers"
+            complexity:
+              composite: 2.5
+            estimated_days: 0.5
+            deliverables:
+              - "Layer structure: 0 (geometry), DIMENSIONS, TEXT, BORDERS"
+              - "Line type definitions: CONTINUOUS, HIDDEN, CENTER"
+              - "Validation: ensure file opens in AutoCAD/LibreCAD"
+
+        feature_2_4:
+          name: "Five Mechanical Component Templates"
+          complexity:
+            composite: 3.8
+            dimensions:
+              technical_complexity: 4
+              scope_size: 5
+              dependencies: 3
+              uncertainty: 3
+              risk: 3
+              testing: 4
+          estimated_days: 8
+          deliverables:
+            - "5 complete templates: mounting bracket, plate, shaft, spacer, simple housing"
+            - "Each template with parameter validation, 3D/2D generation, STEP/DXF export"
+            - "Template-specific test suites"
+
+          task_2_4_1:
+            name: "Mounting bracket template"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "cad_engine/templates/mounting_bracket.py"
+              - "Parameters: base length/width/thickness, hole diameter/spacing, fillet radius"
+              - "3D model with mounting holes and optional ribs"
+              - "2D orthographic views with dimensions"
+
+          task_2_4_2:
+            name: "Plate template"
+            complexity:
+              composite: 2.8
+            estimated_days: 1.5
+            deliverables:
+              - "cad_engine/templates/plate.py"
+              - "Parameters: length, width, thickness, hole pattern (grid/circular)"
+              - "Chamfers on edges (optional)"
+
+          task_2_4_3:
+            name: "Shaft template"
+            complexity:
+              composite: 3.0
+            estimated_days: 1.5
+            deliverables:
+              - "cad_engine/templates/shaft.py"
+              - "Parameters: diameter sections, lengths, shoulder diameters, keyway dimensions"
+              - "Center axis line in 2D views"
+
+          task_2_4_4:
+            name: "Spacer template"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "cad_engine/templates/spacer.py"
+              - "Parameters: outer diameter, inner diameter, thickness"
+              - "Section view generation"
+
+          task_2_4_5:
+            name: "Simple housing template"
+            complexity:
+              composite: 4.2
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (5) - box with internal cavity, mounting bosses, lid interface"
+            estimated_days: 2
+            deliverables:
+              - "cad_engine/templates/simple_housing.py"
+              - "Parameters: external dimensions, wall thickness, mounting boss positions"
+              - "Internal cavity with lid interface"
+            status: "flagged_for_breakdown"
+
+      epic_3:
+        name: "AS 1100 Validation Core"
+        weeks: "2-3"
+        milestone: "60%+ automated compliance validation with scoring rubric"
+
+        feature_3_1:
+          name: "Sheet Layout Validator (AS 1100.101)"
+          complexity:
+            composite: 2.8
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 2
+              risk: 3
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "Validator for sheet sizes, title block, borders per AS 1100.101"
+            - "Compliance report with pass/fail for each rule"
+            - "Suggestions for fixes"
+
+          task_3_1_1:
+            name: "Sheet size validation"
+            complexity:
+              composite: 2.0
+            estimated_days: 1
+            deliverables:
+              - "validators/sheet_layout.py checking A4/A3/A2/A1 dimensions"
+              - "Tolerance: +/- 1mm for sheet dimensions"
+              - "Error messages for non-standard sizes"
+
+          task_3_1_2:
+            name: "Title block validation"
+            complexity:
+              composite: 3.0
+            estimated_days: 1.5
+            deliverables:
+              - "Check title block position (bottom-right corner)"
+              - "Validate required fields: drawing number, part name, scale, date, drafter"
+              - "Text height validation (2.5mm minimum per AS 1100.101)"
+
+          task_3_1_3:
+            name: "Border line validation"
+            complexity:
+              composite: 2.5
+            estimated_days: 0.5
+            deliverables:
+              - "Check border lines: 0.7mm continuous, 20mm margins (A4), 10mm margins (A1)"
+              - "Corner marks validation"
+
+        feature_3_2:
+          name: "Line Standards Checker (AS 1100.101)"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "Line thickness and type validation per AS 1100.101 Table 3.3"
+            - "Automated correction for simple violations"
+
+          task_3_2_1:
+            name: "Line thickness validation"
+            complexity:
+              composite: 2.8
+            estimated_days: 2
+            deliverables:
+              - "validators/line_standards.py checking thickness ratios"
+              - "Thick (0.7mm): visible outlines, cutting planes"
+              - "Medium (0.5mm): hidden lines, dimensions"
+              - "Thin (0.35mm): construction, hatching"
+
+          task_3_2_2:
+            name: "Line type validation"
+            complexity:
+              composite: 2.2
+            estimated_days: 1
+            deliverables:
+              - "Continuous lines: visible edges, outlines"
+              - "Dashed lines (3mm dash, 1mm gap): hidden edges"
+              - "Chain lines: center axes, pitch circles"
+
+        feature_3_3:
+          name: "Dimensioning Validator (AS 1100.101)"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 3
+              risk: 3
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "Dimensioning style compliance: text height, arrow size, tolerance notation"
+            - "Dimension line spacing and placement checks"
+
+          task_3_3_1:
+            name: "Text height and style validation"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "validators/dimensioning.py checking text height (2.5mm minimum)"
+              - "Font: ISO 3098 (or Arial as acceptable substitute)"
+              - "Decimal places: 0 for >100mm, 1 for 10-100mm, 2 for <10mm"
+
+          task_3_3_2:
+            name: "Dimension line placement validation"
+            complexity:
+              composite: 3.2
+            estimated_days: 1.5
+            deliverables:
+              - "Check dimension line spacing (7mm minimum from object, 7mm between lines)"
+              - "Arrow size: 3mm length (consistent throughout drawing)"
+              - "Extension line overshoot: 2mm beyond dimension line"
+
+          task_3_3_3:
+            name: "Tolerance notation validation"
+            complexity:
+              composite: 3.5
+            estimated_days: 1
+            deliverables:
+              - "Validate tolerance format: ±0.1, +0.2/-0.1, or 10.0±0.1"
+              - "Check tolerance text smaller than dimension text (70% height)"
+              - "Detect missing tolerances on critical dimensions"
+
+        feature_3_4:
+          name: "Compliance Scoring Rubric"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 3
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 2
+          deliverables:
+            - "Scoring algorithm: 0-100% based on weighted rules"
+            - "Category breakdown: sheet layout 25%, line standards 20%, dimensioning 30%, projections 25%"
+            - "JSON compliance report"
+
+          task_3_4_1:
+            name: "Implement scoring algorithm"
+            complexity:
+              composite: 2.8
+            estimated_days: 1.5
+            deliverables:
+              - "validators/scoring.py with weighted rule aggregation"
+              - "Critical rules (mandatory): sheet size, title block, line thickness"
+              - "Important rules: dimension text height, arrow size"
+              - "Minor rules: extension line overshoot, corner marks"
+
+          task_3_4_2:
+            name: "Generate compliance report"
+            complexity:
+              composite: 2.2
+            estimated_days: 0.5
+            deliverables:
+              - "JSON report: overall score, category scores, failed rules with line numbers"
+              - "Human-readable summary for CLI output"
+              - "Suggestions for fixes"
+
+      epic_4:
+        name: "User Interface (CLI)"
+        weeks: "3"
+        milestone: "CLI interface for template selection, parameter input, output generation"
+
+        feature_4_1:
+          name: "CLI Parameter Input"
+          complexity:
+            composite: 2.3
+            dimensions:
+              technical_complexity: 2
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "CLI using argparse or Click for template selection and parameters"
+            - "JSON file input for complex parameters"
+            - "Interactive mode for guided parameter entry"
+
+          task_4_1_1:
+            name: "Setup CLI framework"
+            complexity:
+              composite: 2.0
+            estimated_days: 1
+            deliverables:
+              - "cli/main.py using Click framework"
+              - "Commands: generate, list-templates, validate"
+              - "Global options: --verbose, --output-dir"
+
+          task_4_1_2:
+            name: "Implement template selection"
+            complexity:
+              composite: 2.2
+            estimated_days: 1
+            deliverables:
+              - "cad-gen generate --template mounting_bracket"
+              - "cad-gen list-templates with descriptions"
+              - "Tab completion for template names"
+
+          task_4_1_3:
+            name: "JSON and interactive parameter input"
+            complexity:
+              composite: 2.8
+            estimated_days: 1
+            deliverables:
+              - "cad-gen generate --template plate --params params.json"
+              - "Interactive mode: cad-gen generate --template shaft --interactive"
+              - "Parameter validation with clear error messages"
+
+        feature_4_2:
+          name: "Output Generation & Compliance Report"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 3
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 2
+          deliverables:
+            - "Generate STEP, DXF files in output directory"
+            - "Print compliance report to console"
+            - "Export compliance report as JSON/PDF"
+
+          task_4_2_1:
+            name: "File generation workflow"
+            complexity:
+              composite: 2.3
+            estimated_days: 1
+            deliverables:
+              - "Generate STEP and DXF files with consistent naming: <part_name>_<timestamp>.step"
+              - "Output directory structure: output/<template_name>/"
+              - "Progress indicators during generation"
+
+          task_4_2_2:
+            name: "Compliance report display"
+            complexity:
+              composite: 2.7
+            estimated_days: 1
+            deliverables:
+              - "Rich console output with color-coded compliance score"
+              - "Failed rules listed with line references"
+              - "Export JSON report: output/<part_name>_compliance.json"
+
+        feature_4_3:
+          name: "Error Handling & Validation Feedback"
+          complexity:
+            composite: 2.0
+            dimensions:
+              technical_complexity: 2
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 2
+          estimated_days: 2
+          deliverables:
+            - "User-friendly error messages for invalid parameters"
+            - "Suggestions for fixing common errors"
+            - "Graceful degradation for partial failures"
+
+          task_4_3_1:
+            name: "Implement exception handling"
+            complexity:
+              composite: 2.0
+            estimated_days: 1
+            deliverables:
+              - "Custom exceptions: InvalidParameterError, TemplateNotFoundError, ExportError"
+              - "Catch and format exceptions in CLI layer"
+              - "Stack traces only shown with --verbose"
+
+          task_4_3_2:
+            name: "Parameter validation feedback"
+            complexity:
+              composite: 2.0
+            estimated_days: 1
+            deliverables:
+              - "Show which parameter failed validation and why"
+              - "Suggest valid ranges for numeric parameters"
+              - "Example: 'thickness must be between 1mm and 50mm, got 0.5mm'"
+
+      epic_5:
+        name: "Documentation & Testing"
+        weeks: "3-4"
+        milestone: "Complete documentation and test coverage for MVP release"
+
+        feature_5_1:
+          name: "Template Usage Guides"
+          complexity:
+            composite: 2.0
+            dimensions:
+              technical_complexity: 2
+              scope_size: 3
+              dependencies: 1
+              uncertainty: 2
+              risk: 1
+              testing: 2
+          estimated_days: 3
+          deliverables:
+            - "Per-template documentation: parameters, examples, use cases"
+            - "Example parameter JSON files for each template"
+            - "Gallery of generated drawings with source parameters"
+
+          task_5_1_1:
+            name: "Create template documentation"
+            complexity:
+              composite: 2.0
+            estimated_days: 2
+            deliverables:
+              - "docs/templates/<template_name>.md for each of 5 templates"
+              - "Parameter tables with types, ranges, defaults"
+              - "Usage examples with CLI commands"
+
+          task_5_1_2:
+            name: "Build example gallery"
+            complexity:
+              composite: 2.0
+            estimated_days: 1
+            deliverables:
+              - "examples/ directory with parameter JSON files"
+              - "Generated STEP/DXF outputs for examples"
+              - "README in examples/ with gallery images"
+
+        feature_5_2:
+          name: "AS 1100 Compliance Checklist"
+          complexity:
+            composite: 2.2
+            dimensions:
+              technical_complexity: 2
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 2
+          estimated_days: 2
+          deliverables:
+            - "Complete checklist of AS 1100.101 and AS 1100.201 rules"
+            - "Coverage matrix: which rules are automated vs. manual"
+            - "Roadmap for expanding validation coverage"
+
+          task_5_2_1:
+            name: "Document AS 1100 rule coverage"
+            complexity:
+              composite: 2.2
+            estimated_days: 1.5
+            deliverables:
+              - "docs/as1100/coverage.md with rule-by-rule breakdown"
+              - "60%+ automated coverage for MVP (sheet layout, line standards, dimensioning)"
+              - "Remaining 40% flagged for Milestone 2 (projections, symbols)"
+
+          task_5_2_2:
+            name: "Create manual verification checklist"
+            complexity:
+              composite: 2.0
+            estimated_days: 0.5
+            deliverables:
+              - "docs/as1100/manual_checklist.md for human review"
+              - "Items not yet automated: projection method correctness, symbol usage, GD&T"
+
+        feature_5_3:
+          name: "Unit & Integration Tests"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 3
+              scope_size: 4
+              dependencies: 3
+              uncertainty: 2
+              risk: 3
+              testing: 4
+          estimated_days: 5
+          deliverables:
+            - "Unit tests for validators, template classes, utilities"
+            - "Integration tests for end-to-end template generation"
+            - "80%+ code coverage"
+
+          task_5_3_1:
+            name: "Unit tests for validators"
+            complexity:
+              composite: 2.5
+            estimated_days: 2
+            deliverables:
+              - "tests/validators/ with tests for each validator module"
+              - "Test fixtures: sample DXF files with known violations"
+              - "Parameterized tests for edge cases"
+
+          task_5_3_2:
+            name: "Unit tests for templates"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "tests/templates/ with tests for parameter validation"
+              - "Mock build123d/ezdxf calls to test logic without full generation"
+              - "Verify exception handling for invalid parameters"
+
+          task_5_3_3:
+            name: "Integration tests for end-to-end generation"
+            complexity:
+              composite: 3.5
+            estimated_days: 1
+            deliverables:
+              - "tests/integration/ with full template generation tests"
+              - "Verify STEP/DXF files created and parseable"
+              - "Compliance score calculated correctly"
+
+  milestone_2:
+    name: "v1.1 AI-Assisted Expansion"
+    timeline_weeks: "5-10"
+    description: "Expand to 30-50 templates, add LLM specification extraction with Claude Haiku, web UI with FastAPI, automated compliance scoring with iterative refinement (max 3 iterations). Budget: $500/month operational."
+    success_criteria:
+      - "30+ templates covering common mechanical components (gears, pulleys, flanges, clamps, etc.)"
+      - "LLM extracts parameters from natural language with 80%+ accuracy"
+      - "Web UI functional with <3 second response time for simple templates"
+      - "Automated correction fixes 50%+ of simple AS 1100 violations"
+      - "Iterative refinement loop converges within 3 iterations for 90%+ of drawings"
+      - "User satisfaction >80% in pilot testing with 10 users"
+
+    epics:
+      epic_6:
+        name: "Template Library Expansion"
+        weeks: "5-7"
+        milestone: "30+ mechanical component templates with categorization and search"
+
+        feature_6_1:
+          name: "Advanced Mechanical Templates (Batch 1)"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 4
+              dependencies: 2
+              uncertainty: 3
+              risk: 3
+              testing: 4
+          estimated_days: 10
+          deliverables:
+            - "10 additional templates: gear (spur), pulley (V-belt), flange, clamp, bushing, washer, bracket (L-shaped), pin (dowel/spring), nut (hex), bolt"
+            - "Each with full parameter validation and 3D/2D generation"
+
+          task_6_1_1:
+            name: "Rotational component templates (gear, pulley)"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (5) - involute gear tooth profiles, pulley groove geometry"
+            estimated_days: 4
+            deliverables:
+              - "Spur gear template with module, tooth count, pressure angle"
+              - "V-belt pulley with groove profile (40-degree V)"
+            status: "flagged_for_breakdown"
+
+          task_6_1_2:
+            name: "Fastener and hardware templates"
+            complexity:
+              composite: 3.2
+            estimated_days: 3
+            deliverables:
+              - "Hex nut (M3-M20), hex bolt with threads (simplified), washers (plain/spring)"
+              - "Pin templates: dowel pin, spring pin with chamfers"
+
+          task_6_1_3:
+            name: "Structural component templates"
+            complexity:
+              composite: 3.5
+            estimated_days: 3
+            deliverables:
+              - "Flange template (slip-on, weld neck) with bolt holes"
+              - "Clamp template (C-clamp, hose clamp)"
+              - "L-shaped bracket with reinforcement gusset"
+
+        feature_6_2:
+          name: "Advanced Mechanical Templates (Batch 2)"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 4
+              dependencies: 2
+              uncertainty: 3
+              risk: 3
+              testing: 4
+          estimated_days: 10
+          deliverables:
+            - "10 more templates: coupler (flexible), bearing housing, motor mount, cable gland, handle, knob, tube/pipe, connector (hydraulic), valve body, manifold block"
+
+          task_6_2_1:
+            name: "Power transmission templates"
+            complexity:
+              composite: 3.8
+            estimated_days: 4
+            deliverables:
+              - "Flexible coupler (jaw type, Oldham)"
+              - "Bearing housing (pillow block, flange mount)"
+              - "Motor mount plate with slotted holes"
+
+          task_6_2_2:
+            name: "Fluid system templates"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (5) - internal fluid passages, sealing surfaces, thread standards"
+            estimated_days: 3
+            deliverables:
+              - "Hydraulic connector (JIC, NPT threads)"
+              - "Valve body (ball valve, check valve)"
+              - "Manifold block with internal passages"
+            status: "flagged_for_breakdown"
+
+          task_6_2_3:
+            name: "Ergonomic component templates"
+            complexity:
+              composite: 3.0
+            estimated_days: 3
+            deliverables:
+              - "Handle (T-handle, L-handle, pull handle)"
+              - "Knob (cylindrical, spherical with knurling)"
+              - "Cable gland (PG threads, strain relief)"
+
+        feature_6_3:
+          name: "Template Categorization & Search"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "Category system: fasteners, brackets, housings, power transmission, fluid systems, hardware"
+            - "Search by name, category, parameter type"
+            - "Template metadata: complexity, typical use cases, related templates"
+
+          task_6_3_1:
+            name: "Implement template metadata system"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "Template decorator with metadata: category, tags, complexity rating"
+              - "JSON manifest of all templates with metadata"
+
+          task_6_3_2:
+            name: "Build search and filter CLI"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "cad-gen search --category fasteners"
+              - "cad-gen search --tag rotational"
+              - "Filter by complexity: --max-complexity medium"
+
+        feature_6_4:
+          name: "Custom Parameter Validation"
+          complexity:
+            composite: 2.8
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 2
+              risk: 3
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "Template-specific validation rules (e.g., gear module constraints)"
+            - "Cross-parameter validation (e.g., hole diameter < plate width)"
+            - "Engineering constraints (e.g., minimum wall thickness for material)"
+
+          task_6_4_1:
+            name: "Build validation rule DSL"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Domain-specific language for validation rules"
+              - "Rules like: @validate('hole_diameter < plate_width', 'Hole too large')"
+              - "Support for engineering formulas (stress, deflection limits)"
+
+          task_6_4_2:
+            name: "Material property constraints"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "Material database: steel, aluminum, plastic with properties"
+              - "Validate wall thickness based on material strength"
+              - "Warn about manufacturability issues (thin walls, sharp corners)"
+
+      epic_7:
+        name: "LLM Integration"
+        weeks: "6-8"
+        milestone: "Claude Haiku API extracts parameters from natural language with 80%+ accuracy"
+
+        feature_7_1:
+          name: "Claude Haiku API Integration"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 4
+              scope_size: 2
+              dependencies: 3
+              uncertainty: 4
+              risk: 3
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "Anthropic API client with Claude Haiku"
+            - "Error handling for API failures (retry logic, fallback)"
+            - "Cost tracking per request"
+
+          task_7_1_1:
+            name: "Setup Anthropic API client"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "llm/anthropic_client.py using anthropic Python SDK"
+              - "API key management via environment variables"
+              - "Request logging for debugging"
+
+          task_7_1_2:
+            name: "Implement retry and fallback logic"
+            complexity:
+              composite: 3.0
+            estimated_days: 1.5
+            deliverables:
+              - "Exponential backoff retry for rate limits/timeouts"
+              - "Fallback to structured input on repeated failures"
+              - "User notification of fallback"
+
+          task_7_1_3:
+            name: "Cost tracking and budgeting"
+            complexity:
+              composite: 3.5
+            estimated_days: 1
+            deliverables:
+              - "Track tokens per request (input/output)"
+              - "Cumulative cost tracking in SQLite"
+              - "Budget alerts at $50, $100, $200 thresholds"
+
+        feature_7_2:
+          name: "Prompt Engineering for Component Extraction"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 5
+              risk: 3
+              testing: 4
+          estimated_days: 5
+          deliverables:
+            - "System prompts for extracting component specs from natural language"
+            - "Few-shot examples for each template category"
+            - "Iterative prompt refinement based on accuracy testing"
+
+          task_7_2_1:
+            name: "Design system prompt architecture"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "System prompt: role (mechanical engineer), task (extract parameters), output format (JSON)"
+              - "Include AS 1100 context and unit expectations (metric)"
+              - "Handling ambiguity: ask clarifying questions vs. reasonable defaults"
+
+          task_7_2_2:
+            name: "Build few-shot example library"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "5-10 examples per template category showing input text → JSON output"
+              - "Cover edge cases: missing parameters, ambiguous language, imperial units"
+              - "Examples stored in llm/prompts/examples/"
+
+          task_7_2_3:
+            name: "Prompt refinement workflow"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High uncertainty (5) - requires iterative testing with real user inputs and accuracy benchmarking"
+            estimated_days: 1
+            deliverables:
+              - "Test harness with 50 sample natural language inputs"
+              - "Measure accuracy: exact match, partial match, failure rate"
+              - "Iterate on prompt wording to improve 80%+ accuracy"
+            status: "flagged_for_breakdown"
+
+        feature_7_3:
+          name: "JSON Schema Validation for LLM Outputs"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 2
+              risk: 3
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "JSON schema definitions for each template's parameters"
+            - "Validation pipeline: LLM output → schema validation → user confirmation"
+            - "Handling validation failures: retry with corrections"
+
+          task_7_3_1:
+            name: "Generate JSON schemas from Pydantic models"
+            complexity:
+              composite: 2.0
+            estimated_days: 1
+            deliverables:
+              - "Auto-generate JSON schemas from existing Pydantic parameter models"
+              - "Include schemas in LLM system prompt for guidance"
+              - "Schemas stored in llm/schemas/"
+
+          task_7_3_2:
+            name: "Validation and error recovery"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Validate LLM JSON output against schema"
+              - "On failure: send validation errors back to LLM for correction (1 retry)"
+              - "On repeated failure: prompt user for manual parameter entry"
+
+        feature_7_4:
+          name: "Confidence Scoring for Extracted Parameters"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 4
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 4
+              risk: 2
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "Confidence score (0-100%) for each extracted parameter"
+            - "Low confidence (<70%) parameters flagged for user review"
+            - "Confidence based on: LLM certainty, validation success, parameter criticality"
+
+          task_7_4_1:
+            name: "Implement confidence scoring algorithm"
+            complexity:
+              composite: 3.2
+            estimated_days: 2
+            deliverables:
+              - "Parse LLM response for uncertainty indicators ('approximately', 'assuming')"
+              - "Schema validation success boosts confidence"
+              - "Critical parameters (dimensions, tolerances) require higher confidence"
+
+          task_7_4_2:
+            name: "User review workflow for low confidence"
+            complexity:
+              composite: 2.8
+            estimated_days: 1
+            deliverables:
+              - "Highlight low-confidence parameters in yellow in CLI/web UI"
+              - "Prompt user: 'Extracted hole_diameter=10mm (confidence: 65%), confirm or correct?'"
+              - "User can accept, correct, or reject extraction"
+
+      epic_8:
+        name: "Enhanced AS 1100 Validation"
+        weeks: "7-9"
+        milestone: "70%+ automated validation coverage with iterative refinement loop"
+
+        feature_8_1:
+          name: "Projection Method Validation (AS 1100.201)"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 5
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 4
+              risk: 3
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "Validate orthographic projection correctness (first vs. third angle)"
+            - "Check view alignment and spacing"
+            - "Section view validation (cutting plane, hatching)"
+
+          task_8_1_1:
+            name: "Orthographic projection validator"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (5) - requires geometric reasoning about 3D-to-2D projection correctness"
+            estimated_days: 3
+            deliverables:
+              - "Detect first angle vs. third angle projection method"
+              - "Validate view placement: front-top-side arrangement"
+              - "Check hidden lines correctly rendered as dashed"
+            status: "flagged_for_breakdown"
+
+          task_8_1_2:
+            name: "Section view validator"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Validate cutting plane line (chain line, thick, labeled A-A)"
+              - "Check section hatching (45-degree, 3mm spacing for steel)"
+              - "Verify section view labeled 'SECTION A-A'"
+
+        feature_8_2:
+          name: "Symbol Library Compliance"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 3
+              scope_size: 4
+              dependencies: 2
+              uncertainty: 3
+              risk: 3
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "Validate welding symbols per AS 1100.201"
+            - "GD&T (Geometric Dimensioning & Tolerancing) symbol validation"
+            - "Surface finish symbols (Ra, Rz)"
+
+          task_8_2_1:
+            name: "Welding symbol validator"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Detect welding symbols: fillet, butt, spot welds"
+              - "Validate symbol components: arrow, reference line, tail"
+              - "Check weld size notation placement"
+
+          task_8_2_2:
+            name: "GD&T symbol validator"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "Validate feature control frames: flatness, perpendicularity, position"
+              - "Check datum references (A, B, C)"
+              - "Verify tolerance zones and material conditions (MMC, LMC)"
+
+          task_8_2_3:
+            name: "Surface finish symbol validator"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "Validate surface finish symbols: checkmark, Ra value"
+              - "Check placement on dimension lines or leaders"
+              - "Verify units (micrometers)"
+
+        feature_8_3:
+          name: "Automated Correction for Simple Violations"
+          complexity:
+            composite: 3.2
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 4
+              testing: 4
+          estimated_days: 5
+          deliverables:
+            - "Auto-fix line thickness violations (scale to 0.35/0.5/0.7mm)"
+            - "Auto-correct text height (scale to 2.5mm minimum)"
+            - "Auto-adjust dimension line spacing (enforce 7mm minimum)"
+
+          task_8_3_1:
+            name: "Line thickness auto-correction"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Detect line thickness violations (e.g., 0.6mm where 0.7mm expected)"
+              - "Scale lines to nearest AS 1100 standard thickness"
+              - "Log corrections in compliance report"
+
+          task_8_3_2:
+            name: "Text height auto-correction"
+            complexity:
+              composite: 2.8
+            estimated_days: 1.5
+            deliverables:
+              - "Scale dimension text to 2.5mm minimum"
+              - "Preserve aspect ratio (do not distort)"
+              - "Reposition if scaled text overlaps geometry"
+
+          task_8_3_3:
+            name: "Dimension spacing auto-correction"
+            complexity:
+              composite: 3.5
+            estimated_days: 1.5
+            deliverables:
+              - "Detect dimension lines closer than 7mm"
+              - "Redistribute dimension lines with 7mm spacing"
+              - "Handle complex cases: multiple parallel dimensions"
+
+        feature_8_4:
+          name: "Iterative Refinement Loop"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 4
+              uncertainty: 3
+              risk: 3
+              testing: 4
+          estimated_days: 4
+          deliverables:
+            - "Refinement loop: generate → validate → auto-correct → re-validate (max 3 iterations)"
+            - "Convergence detection: stop when score improvement <5% between iterations"
+            - "Prevent infinite loops: hard limit 3 iterations"
+
+          task_8_4_1:
+            name: "Implement refinement loop controller"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "Loop: for i in range(3): generate() → validate() → correct() → score()"
+              - "Track score deltas: stop if improvement <5%"
+              - "Return best iteration's output (highest score)"
+
+          task_8_4_2:
+            name: "Correction prioritization"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "Prioritize corrections by impact: critical (title block) > important (dimensions) > minor (extension lines)"
+              - "Apply corrections incrementally to avoid compounding errors"
+              - "Log which corrections were applied each iteration"
+
+      epic_9:
+        name: "Web Interface"
+        weeks: "8-10"
+        milestone: "FastAPI backend with web form, natural language input, real-time compliance scoring"
+
+        feature_9_1:
+          name: "FastAPI Backend Setup"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "FastAPI application with endpoints: /templates, /generate, /validate"
+            - "CORS configuration for frontend"
+            - "API documentation with Swagger UI"
+
+          task_9_1_1:
+            name: "Setup FastAPI application"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "api/main.py with FastAPI app"
+              - "Endpoints: GET /templates (list), POST /generate, POST /validate"
+              - "Pydantic models for request/response schemas"
+
+          task_9_1_2:
+            name: "Configure CORS and docs"
+            complexity:
+              composite: 2.0
+            estimated_days: 0.5
+            deliverables:
+              - "CORS middleware for localhost:3000 (frontend)"
+              - "Swagger UI at /docs, ReDoc at /redoc"
+
+          task_9_1_3:
+            name: "Background task queue for generation"
+            complexity:
+              composite: 3.0
+            estimated_days: 1
+            deliverables:
+              - "Async generation using FastAPI BackgroundTasks"
+              - "Status endpoint: GET /status/<job_id>"
+              - "Job states: pending, processing, completed, failed"
+
+        feature_9_2:
+          name: "Web Form for Parameter Input"
+          complexity:
+            composite: 2.8
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "React frontend with template selection dropdown"
+            - "Dynamic form generation based on template parameters"
+            - "Client-side validation with error messages"
+
+          task_9_2_1:
+            name: "Template selection UI"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "Dropdown: 'Select template: Mounting Bracket, Plate, Shaft...'"
+              - "Template description and example image"
+              - "Fetch templates from GET /templates endpoint"
+
+          task_9_2_2:
+            name: "Dynamic parameter form"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Form fields generated from template schema (number, select, boolean)"
+              - "Units displayed: length (mm), angle (degrees)"
+              - "Tooltips with parameter descriptions"
+
+          task_9_2_3:
+            name: "Client-side validation"
+            complexity:
+              composite: 2.8
+            estimated_days: 0.5
+            deliverables:
+              - "Real-time validation: show red border for invalid inputs"
+              - "Error messages below fields: 'Must be between 1 and 100'"
+              - "Disable submit button until all fields valid"
+
+        feature_9_3:
+          name: "Natural Language Specification Input"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 3
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "Text area for natural language specification"
+            - "'Extract Parameters' button triggers LLM API call"
+            - "Extracted parameters populate form fields for user review"
+
+          task_9_3_1:
+            name: "Natural language input UI"
+            complexity:
+              composite: 2.0
+            estimated_days: 1
+            deliverables:
+              - "Large text area: 'Describe the part you need...'"
+              - "Example text shown as placeholder"
+              - "Character limit: 1000 characters"
+
+          task_9_3_2:
+            name: "LLM extraction workflow"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "POST /extract endpoint calls Claude Haiku API"
+              - "Show loading spinner during extraction (2-5 seconds)"
+              - "Populate form fields with extracted parameters"
+              - "Highlight low-confidence fields in yellow"
+
+        feature_9_4:
+          name: "Real-Time Compliance Scoring Display"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "Compliance score gauge (0-100%) updated after generation"
+            - "Failed rules listed with descriptions"
+            - "Download links for STEP, DXF, compliance JSON"
+
+          task_9_4_1:
+            name: "Compliance score gauge"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "Circular progress gauge: green (>80%), yellow (60-80%), red (<60%)"
+              - "Update after POST /generate completes"
+              - "Show category breakdown: sheet layout 85%, dimensions 70%"
+
+          task_9_4_2:
+            name: "Failed rules display"
+            complexity:
+              composite: 2.8
+            estimated_days: 1
+            deliverables:
+              - "Expandable list: 'Failed Rules (3)'"
+              - "Each rule: name, description, suggested fix"
+              - "Link to AS 1100 section in docs"
+
+          task_9_4_3:
+            name: "Download links"
+            complexity:
+              composite: 3.5
+            estimated_days: 1
+            deliverables:
+              - "Download buttons: STEP, DXF, Compliance Report (JSON/PDF)"
+              - "File served from GET /download/<job_id>/<file_type>"
+              - "File names: <part_name>_<timestamp>.step"
+
+        feature_9_5:
+          name: "Performance Optimization"
+          complexity:
+            composite: 3.2
+            dimensions:
+              technical_complexity: 4
+              scope_size: 2
+              dependencies: 3
+              uncertainty: 3
+              risk: 3
+              testing: 3
+          estimated_days: 2
+          deliverables:
+            - "Response time <3 seconds for simple templates"
+            - "Caching: template schemas, LLM extractions (1 hour TTL)"
+            - "Async generation with progress updates"
+
+          task_9_5_1:
+            name: "Implement caching layer"
+            complexity:
+              composite: 3.0
+            estimated_days: 1
+            deliverables:
+              - "Redis or in-memory cache for template schemas"
+              - "Cache LLM extractions by input hash (1 hour TTL)"
+              - "Cache hit logging"
+
+          task_9_5_2:
+            name: "Async generation with progress"
+            complexity:
+              composite: 3.5
+            estimated_days: 1
+            deliverables:
+              - "WebSocket or SSE for progress updates: 'Generating 3D model... 50%'"
+              - "Progress bar in UI"
+              - "Stages: Validating parameters (10%), Generating 3D (40%), Generating 2D (70%), Validating compliance (90%)"
+
+      epic_10:
+        name: "Database & Storage"
+        weeks: "9-10"
+        milestone: "SQLite database for submissions and outputs, version history tracking"
+
+        feature_10_1:
+          name: "Database Schema & Models"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 2
+          deliverables:
+            - "SQLite database with tables: submissions, outputs, jobs"
+            - "SQLAlchemy ORM models"
+            - "Database migrations with Alembic"
+
+          task_10_1_1:
+            name: "Design database schema"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "Tables: submissions (id, template, parameters, timestamp), outputs (id, submission_id, file_path, compliance_score), jobs (id, status, created_at)"
+              - "Foreign keys and indexes"
+              - "Schema diagram"
+
+          task_10_1_2:
+            name: "Implement SQLAlchemy models"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "db/models.py with Submission, Output, Job classes"
+              - "Relationships: Submission.outputs (one-to-many)"
+              - "Database initialization script"
+
+        feature_10_2:
+          name: "File Storage System"
+          complexity:
+            composite: 2.3
+            dimensions:
+              technical_complexity: 2
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 2
+          deliverables:
+            - "Filesystem storage: outputs/<submission_id>/<file_name>"
+            - "File cleanup policy: delete after 30 days"
+            - "Storage quota tracking"
+
+          task_10_2_1:
+            name: "Implement file storage utilities"
+            complexity:
+              composite: 2.0
+            estimated_days: 1
+            deliverables:
+              - "storage/filesystem.py with save_file(), get_file(), delete_file()"
+              - "Directory structure: outputs/<submission_id>/"
+              - "Atomic writes to prevent partial files"
+
+          task_10_2_2:
+            name: "Cleanup and quota management"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "Scheduled job: delete files older than 30 days"
+              - "Track storage usage per user (future)"
+              - "Quota alerts at 80%, 90%, 100%"
+
+        feature_10_3:
+          name: "Version History Tracking"
+          complexity:
+            composite: 2.8
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 3
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 2
+          deliverables:
+            - "Track parameter changes and regenerations"
+            - "Version diffing: show what parameters changed"
+            - "Restore previous version"
+
+          task_10_3_1:
+            name: "Implement version tracking"
+            complexity:
+              composite: 2.8
+            estimated_days: 1.5
+            deliverables:
+              - "submissions.version field (auto-increment)"
+              - "Store parameter JSON for each version"
+              - "Link versions: parent_submission_id"
+
+          task_10_3_2:
+            name: "Version diff and restore"
+            complexity:
+              composite: 2.8
+            estimated_days: 0.5
+            deliverables:
+              - "Endpoint: GET /submissions/<id>/diff?from=v1&to=v2"
+              - "Show changed parameters: hole_diameter: 10mm → 12mm"
+              - "Restore version: POST /submissions/<id>/restore?version=v1"
+
+  milestone_3:
+    name: "v2.0 Production System"
+    timeline_weeks: "11-18"
+    description: "AI-generated novel geometries via Zoo Text-to-CAD API, human review workflow for AI outputs, comprehensive AS 1100 validation (70%+ coverage), RESTful API for integrations, production infrastructure (PostgreSQL, AWS/GCP deployment, monitoring). Budget: $500/month operational."
+    success_criteria:
+      - "AI generation succeeds for 60%+ of novel geometries with hallucination detection"
+      - "Human review time <30 minutes per drawing with approval/rejection workflow"
+      - "70%+ AS 1100 validation coverage (all AS 1100.101 + core AS 1100.201 rules)"
+      - "RESTful API handles 100+ requests/day with authentication and rate limiting"
+      - "Production deployment achieves 99.5% uptime with monitoring and backups"
+      - "End-to-end latency <10 seconds for template-based, <60 seconds for AI-generated"
+
+    epics:
+      epic_11:
+        name: "AI CAD Generation"
+        weeks: "11-13"
+        milestone: "Zoo Text-to-CAD API integration with validation layer and cost optimization"
+
+        feature_11_1:
+          name: "Zoo Text-to-CAD API Integration"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 4
+              uncertainty: 5
+              risk: 4
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "Zoo API client for text-to-CAD generation"
+            - "Convert natural language specs to Zoo API format"
+            - "STEP file retrieval and parsing"
+
+          task_11_1_1:
+            name: "Setup Zoo API client"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "ai_cad/zoo_client.py using Zoo API SDK"
+              - "API key management and authentication"
+              - "Request logging for debugging"
+
+          task_11_1_2:
+            name: "Natural language to Zoo format conversion"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High uncertainty (5) - Zoo API input format requirements unclear, may need experimentation"
+            estimated_days: 2
+            deliverables:
+              - "Convert user specs to Zoo-compatible prompts"
+              - "Extract geometry keywords: 'cylindrical housing with 4 mounting holes'"
+              - "Include dimensional constraints in prompt"
+            status: "flagged_for_breakdown"
+
+          task_11_1_3:
+            name: "STEP file retrieval and validation"
+            complexity:
+              composite: 3.5
+            estimated_days: 1
+            deliverables:
+              - "Download STEP file from Zoo API response"
+              - "Parse with OCP to verify valid geometry"
+              - "Extract bounding box and volume for sanity checks"
+
+        feature_11_2:
+          name: "AI Hallucination Detection"
+          complexity:
+            composite: 3.8
+            dimensions:
+              technical_complexity: 5
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 5
+              risk: 4
+              testing: 4
+          estimated_days: 6
+          deliverables:
+            - "Validation layer: check geometry sanity (volume, bounding box, feature count)"
+            - "Detect impossible geometries (self-intersections, non-manifold surfaces)"
+            - "Confidence scoring for AI-generated CAD"
+
+          task_11_2_1:
+            name: "Geometry sanity checks"
+            complexity:
+              composite: 3.5
+            estimated_days: 2.5
+            deliverables:
+              - "Validate volume: reject if <0.01mm³ or >10,000,000mm³"
+              - "Check bounding box: reject if any dimension >10m (unrealistic)"
+              - "Feature count: warn if >1000 faces (overly complex)"
+
+          task_11_2_2:
+            name: "Topology validation"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (5) - requires advanced CAD kernel knowledge (OCP/OpenCascade)"
+            estimated_days: 2.5
+            deliverables:
+              - "Detect self-intersections using OCP"
+              - "Check for non-manifold surfaces (edges shared by >2 faces)"
+              - "Validate closed volumes (watertight meshes)"
+            status: "flagged_for_breakdown"
+
+          task_11_2_3:
+            name: "AI confidence scoring"
+            complexity:
+              composite: 3.8
+            estimated_days: 1
+            deliverables:
+              - "Score based on: geometry sanity (40%), topology (30%), prompt match (30%)"
+              - "Low confidence (<60%): flag for human review"
+              - "Very low confidence (<40%): reject, fallback to template"
+
+        feature_11_3:
+          name: "Fallback to Template-Based Generation"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 3
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "Fallback logic: if AI generation fails or low confidence, use closest template"
+            - "Template matching: find template closest to user spec"
+            - "User notification of fallback"
+
+          task_11_3_1:
+            name: "Implement fallback logic"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "Decision tree: AI fails → match to template → generate with template"
+              - "Log fallback events for later analysis"
+              - "User message: 'AI generation failed, using Mounting Bracket template'"
+
+          task_11_3_2:
+            name: "Template matching algorithm"
+            complexity:
+              composite: 3.0
+            estimated_days: 1.5
+            deliverables:
+              - "Keyword matching: 'bracket' → mounting_bracket template"
+              - "Parameter similarity: extract dimensions, find closest template"
+              - "Confidence score for match quality"
+
+        feature_11_4:
+          name: "Cost Optimization"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 3
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "Caching: reuse AI-generated geometries for similar specs"
+            - "Prefer templates over AI generation when possible"
+            - "Cost tracking dashboard"
+
+          task_11_4_1:
+            name: "AI generation caching"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Cache AI-generated STEP files by prompt hash"
+              - "Similarity matching: reuse cached geometry if prompt 90%+ similar"
+              - "Cache TTL: 7 days"
+
+          task_11_4_2:
+            name: "Template preference logic"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "Decision: if template match confidence >80%, skip AI generation"
+              - "User option: 'Use template' vs. 'Generate custom with AI'"
+              - "Cost warning: 'AI generation costs $0.50, template is free'"
+
+          task_11_4_3:
+            name: "Cost tracking dashboard"
+            complexity:
+              composite: 3.5
+            estimated_days: 1
+            deliverables:
+              - "Track costs: Zoo API, Claude Haiku API by day/week/month"
+              - "Dashboard: total spend, breakdown by API, average per request"
+              - "Budget alerts at $400/$450/$500 monthly thresholds"
+
+      epic_12:
+        name: "Human Review Workflow"
+        weeks: "12-14"
+        milestone: "Review queue, approval/rejection interface, engineer annotation tools"
+
+        feature_12_1:
+          name: "Review Queue Management"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 2
+              risk: 3
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "Queue of AI-generated drawings awaiting review"
+            - "Priority sorting: low confidence, urgent requests"
+            - "Reviewer assignment and workload balancing"
+
+          task_12_1_1:
+            name: "Build review queue database"
+            complexity:
+              composite: 2.8
+            estimated_days: 2
+            deliverables:
+              - "Table: review_queue (id, submission_id, status, priority, assigned_to, created_at)"
+              - "Statuses: pending, in_review, approved, rejected"
+              - "Priority: low_confidence (high), normal, low"
+
+          task_12_1_2:
+            name: "Queue UI with filtering"
+            complexity:
+              composite: 3.2
+            estimated_days: 2
+            deliverables:
+              - "Review queue page: list drawings with thumbnail, compliance score, priority"
+              - "Filters: status, priority, assigned_to, date range"
+              - "Sorting: priority (high first), oldest first"
+
+        feature_12_2:
+          name: "Approval/Rejection Interface"
+          complexity:
+            composite: 3.2
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 2
+              risk: 3
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "Drawing viewer with zoom, pan, section views"
+            - "Approve/Reject buttons with required comment"
+            - "Rejection reasons: geometry errors, non-compliance, safety issues"
+
+          task_12_2_1:
+            name: "Drawing viewer UI"
+            complexity:
+              composite: 3.5
+            estimated_days: 2.5
+            deliverables:
+              - "3D viewer: Three.js rendering STEP file"
+              - "2D viewer: pan/zoom DXF with ezdxf rendering to SVG"
+              - "Side-by-side: 3D model + 2D orthographic views"
+
+          task_12_2_2:
+            name: "Approval/rejection workflow"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Approve button: moves to 'approved' status, notifies user"
+              - "Reject button: requires comment and reason selection"
+              - "Rejection reasons dropdown: Geometry Error, Non-Compliant, Safety Issue, Other"
+
+          task_12_2_3:
+            name: "Notification system"
+            complexity:
+              composite: 3.0
+            estimated_days: 0.5
+            deliverables:
+              - "Email notification to user on approval/rejection"
+              - "In-app notification in user dashboard"
+              - "Include reviewer comment and next steps"
+
+        feature_12_3:
+          name: "Engineer Annotation Tools"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 3
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "Annotation layer: add comments, highlight issues on drawing"
+            - "Suggested corrections: 'Increase fillet radius here'"
+            - "Annotation export to PDF"
+
+          task_12_3_1:
+            name: "Annotation layer on 2D viewer"
+            complexity:
+              composite: 3.8
+            estimated_days: 3
+            deliverables:
+              - "Click to add annotation: text box, arrow pointing to issue"
+              - "Highlight areas: draw rectangle/circle around problem"
+              - "Annotation types: error (red), warning (yellow), note (blue)"
+
+          task_12_3_2:
+            name: "Suggested corrections"
+            complexity:
+              composite: 3.2
+            estimated_days: 1.5
+            deliverables:
+              - "Pre-defined correction templates: 'Increase fillet', 'Fix dimension', 'Add tolerance'"
+              - "Custom text entry for specific feedback"
+              - "Corrections stored in database for learning"
+
+          task_12_3_3:
+            name: "Annotation export"
+            complexity:
+              composite: 3.5
+            estimated_days: 0.5
+            deliverables:
+              - "Export annotated drawing to PDF"
+              - "Annotations rendered as overlay on DXF rendering"
+              - "Include reviewer name, date, summary of issues"
+
+        feature_12_4:
+          name: "Compliance Checklist Integration"
+          complexity:
+            composite: 2.8
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 3
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "Interactive AS 1100 checklist for manual verification"
+            - "Check off items: sheet size, title block, dimensions, projections"
+            - "Auto-populate checklist with automated validation results"
+
+          task_12_4_1:
+            name: "Build interactive checklist UI"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "Checklist widget: collapsible categories (sheet layout, lines, dimensions)"
+              - "Checkbox per rule with pass/fail/N/A"
+              - "Auto-check based on automated validator results"
+
+          task_12_4_2:
+            name: "Manual verification workflow"
+            complexity:
+              composite: 3.0
+            estimated_days: 1.5
+            deliverables:
+              - "Reviewer manually checks items not automated"
+              - "Add comments for failed items: 'Projection method incorrect'"
+              - "Overall checklist completion percentage"
+
+      epic_13:
+        name: "Comprehensive AS 1100 Validation"
+        weeks: "13-15"
+        milestone: "70%+ automated coverage (all AS 1100.101 + core AS 1100.201)"
+
+        feature_13_1:
+          name: "Complete AS 1100.101 Coverage"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 4
+              dependencies: 3
+              uncertainty: 3
+              risk: 3
+              testing: 4
+          estimated_days: 6
+          deliverables:
+            - "Remaining AS 1100.101 rules: scale notation, grid references, revision history"
+            - "100% coverage of AS 1100.101 general drawing practice"
+
+          task_13_1_1:
+            name: "Scale notation validator"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Validate scale format: '1:1', '1:2', '2:1'"
+              - "Check scale placement in title block"
+              - "Warn if scale not suitable for sheet size (e.g., 1:1 on A4 for large part)"
+
+          task_13_1_2:
+            name: "Grid reference validator"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "Check grid lines: columns (A, B, C...), rows (1, 2, 3...)"
+              - "Validate grid spacing (100mm for A1, 50mm for A4)"
+              - "Grid labels in margins"
+
+          task_13_1_3:
+            name: "Revision history validator"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "Validate revision block: revision letter, description, date, approved by"
+              - "Check revision triangles on drawing pointing to changed areas"
+              - "Ensure revision letters sequential (A, B, C...)"
+
+        feature_13_2:
+          name: "Manufacturing Information Completeness"
+          complexity:
+            composite: 3.8
+            dimensions:
+              technical_complexity: 4
+              scope_size: 4
+              dependencies: 3
+              uncertainty: 4
+              risk: 4
+              testing: 3
+          estimated_days: 6
+          deliverables:
+            - "Validate material specification present"
+            - "Check finish requirements (painting, plating, heat treatment)"
+            - "Validate part number and assembly references"
+
+          task_13_2_1:
+            name: "Material specification validator"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "Check title block or notes for material: 'AISI 1020 Steel', 'AL 6061-T6'"
+              - "Validate material format against standards (AISI, ISO, AS)"
+              - "Warn if material missing or non-standard"
+
+          task_13_2_2:
+            name: "Finish requirements validator"
+            complexity:
+              composite: 3.8
+            estimated_days: 2
+            deliverables:
+              - "Check for finish notes: 'Zinc plated', 'Powder coated RAL 7035', 'Anodized'"
+              - "Validate surface finish symbols (Ra values)"
+              - "Warn if exposed steel parts lack finish specification"
+
+          task_13_2_3:
+            name: "Part numbering validator"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High uncertainty (4) - part numbering schemes vary by organization"
+            estimated_days: 2
+            deliverables:
+              - "Check drawing number format: unique, no duplicates"
+              - "Validate part number in title block matches file name"
+              - "Check assembly references if part of larger assembly"
+            status: "flagged_for_breakdown"
+
+        feature_13_3:
+          name: "Tolerance Specification Adequacy"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 4
+              risk: 3
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "Validate critical dimensions have tolerances"
+            - "Check general tolerance note present"
+            - "Warn about over-tolerancing (too tight for manufacturing)"
+
+          task_13_3_1:
+            name: "Critical dimension tolerance check"
+            complexity:
+              composite: 3.8
+            estimated_days: 2.5
+            deliverables:
+              - "Identify critical dimensions: hole diameters, mating surfaces, thread depths"
+              - "Ensure critical dimensions have explicit tolerances (±0.1, +0.2/-0.1)"
+              - "Flag dimensions missing tolerances"
+
+          task_13_3_2:
+            name: "General tolerance note validator"
+            complexity:
+              composite: 3.0
+            estimated_days: 1.5
+            deliverables:
+              - "Check for general tolerance note: 'Unless otherwise specified: ±0.5mm'"
+              - "Validate note format and placement (near title block)"
+              - "Warn if missing general tolerance note"
+
+          task_13_3_3:
+            name: "Over-tolerancing detection"
+            complexity:
+              composite: 3.5
+            estimated_days: 1
+            deliverables:
+              - "Warn if tolerances tighter than typical (±0.01mm for non-precision parts)"
+              - "Suggest looser tolerances where appropriate"
+              - "Manufacturing difficulty scoring"
+
+        feature_13_4:
+          name: "Industry-Specific Validation Rules"
+          complexity:
+            composite: 3.8
+            dimensions:
+              technical_complexity: 4
+              scope_size: 4
+              dependencies: 3
+              uncertainty: 5
+              risk: 3
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "Mining industry rules: corrosion protection, explosion-proof"
+            - "Construction rules: weld specifications, load ratings"
+            - "Configurable rule sets per industry"
+
+          task_13_4_1:
+            name: "Mining industry rules"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High uncertainty (5) - requires domain expertise in mining regulations"
+            estimated_days: 2
+            deliverables:
+              - "Check for corrosion protection notes (galvanizing, stainless steel)"
+              - "Validate explosion-proof certifications if applicable"
+              - "Warn about sharp edges (safety hazard)"
+            status: "flagged_for_breakdown"
+
+          task_13_4_2:
+            name: "Construction industry rules"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High uncertainty (5) - requires domain expertise in construction codes"
+            estimated_days: 2
+            deliverables:
+              - "Validate weld symbols and specifications (AS 1554)"
+              - "Check load ratings and safety factors"
+              - "Ensure structural steel grades specified (AS/NZS 3678)"
+            status: "flagged_for_breakdown"
+
+          task_13_4_3:
+            name: "Configurable industry rule sets"
+            complexity:
+              composite: 3.5
+            estimated_days: 1
+            deliverables:
+              - "Rule set selector: Mining, Construction, General Manufacturing"
+              - "Enable/disable rules per industry"
+              - "Custom rule definition via YAML config"
+
+      epic_14:
+        name: "API & Integrations"
+        weeks: "14-16"
+        milestone: "RESTful API with authentication, rate limiting, webhook support"
+
+        feature_14_1:
+          name: "RESTful API Endpoints"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 2
+              risk: 3
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "API endpoints: POST /api/v1/generate, GET /api/v1/status/<job_id>, GET /api/v1/download/<job_id>"
+            - "OpenAPI 3.0 specification"
+            - "Versioned API (v1 prefix)"
+
+          task_14_1_1:
+            name: "Design API schema"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "OpenAPI 3.0 spec: endpoints, request/response schemas"
+              - "Consistent error format: {error: 'message', code: 'ERROR_CODE'}"
+              - "Pagination for list endpoints"
+
+          task_14_1_2:
+            name: "Implement core endpoints"
+            complexity:
+              composite: 3.5
+            estimated_days: 2.5
+            deliverables:
+              - "POST /api/v1/generate: create generation job"
+              - "GET /api/v1/status/<job_id>: check job status"
+              - "GET /api/v1/download/<job_id>/<file_type>: download STEP/DXF/JSON"
+
+        feature_14_2:
+          name: "Authentication & Authorization"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 4
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "API key authentication"
+            - "User accounts and roles (admin, reviewer, user)"
+            - "OAuth2 integration for future expansion"
+
+          task_14_2_1:
+            name: "API key authentication"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Generate API keys for users"
+              - "Header: Authorization: Bearer <api_key>"
+              - "Key validation middleware"
+
+          task_14_2_2:
+            name: "User accounts and roles"
+            complexity:
+              composite: 3.8
+            estimated_days: 2.5
+            deliverables:
+              - "User registration: email, password (hashed with bcrypt)"
+              - "Roles: admin (all access), reviewer (review queue), user (generate only)"
+              - "Role-based access control (RBAC)"
+
+          task_14_2_3:
+            name: "OAuth2 integration"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (5) - OAuth2 flows require careful security implementation"
+            estimated_days: 0.5
+            deliverables:
+              - "OAuth2 authorization code flow (future)"
+              - "Support for Google, GitHub login"
+              - "Token refresh mechanism"
+            status: "flagged_for_breakdown"
+
+        feature_14_3:
+          name: "Rate Limiting & Usage Tracking"
+          complexity:
+            composite: 3.2
+            dimensions:
+              technical_complexity: 4
+              scope_size: 2
+              dependencies: 3
+              uncertainty: 3
+              risk: 3
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "Rate limiting: 100 requests/hour per user"
+            - "Usage tracking: API calls, generation count, storage used"
+            - "Quota enforcement"
+
+          task_14_3_1:
+            name: "Implement rate limiting"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "Rate limiter middleware: 100 requests/hour per API key"
+              - "Response headers: X-RateLimit-Remaining, X-RateLimit-Reset"
+              - "429 Too Many Requests error"
+
+          task_14_3_2:
+            name: "Usage tracking dashboard"
+            complexity:
+              composite: 3.0
+            estimated_days: 1
+            deliverables:
+              - "Track: API calls/day, generations/day, storage used"
+              - "User dashboard: usage stats, quota remaining"
+              - "Admin dashboard: system-wide usage"
+
+        feature_14_4:
+          name: "Webhook Support for Async Generation"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 3
+              testing: 4
+          estimated_days: 4
+          deliverables:
+            - "Webhook registration: POST /api/v1/webhooks"
+            - "Webhook events: generation.completed, generation.failed"
+            - "Retry logic for failed webhook deliveries"
+
+          task_14_4_1:
+            name: "Webhook registration system"
+            complexity:
+              composite: 3.0
+            estimated_days: 1.5
+            deliverables:
+              - "POST /api/v1/webhooks: register URL, events"
+              - "Store webhooks in database"
+              - "Webhook verification: HMAC signature"
+
+          task_14_4_2:
+            name: "Webhook delivery system"
+            complexity:
+              composite: 3.8
+            estimated_days: 2
+            deliverables:
+              - "Trigger webhook on events: send POST to registered URL"
+              - "Payload: {event: 'generation.completed', job_id: '123', download_url: '...'}"
+              - "Retry: 3 attempts with exponential backoff"
+
+          task_14_4_3:
+            name: "Webhook monitoring and logs"
+            complexity:
+              composite: 3.5
+            estimated_days: 0.5
+            deliverables:
+              - "Log all webhook deliveries: success/failure, response time"
+              - "UI: webhook delivery history per user"
+              - "Debug tool: resend failed webhook"
+
+      epic_15:
+        name: "Production Infrastructure"
+        weeks: "15-18"
+        milestone: "PostgreSQL migration, AWS/GCP deployment, monitoring, backups"
+
+        feature_15_1:
+          name: "PostgreSQL Migration"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 2
+              risk: 3
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "Migrate from SQLite to PostgreSQL"
+            - "Database migration scripts"
+            - "Connection pooling and performance tuning"
+
+          task_15_1_1:
+            name: "PostgreSQL setup and configuration"
+            complexity:
+              composite: 2.8
+            estimated_days: 1.5
+            deliverables:
+              - "PostgreSQL 15 installation"
+              - "Database creation: cad_automation_prod"
+              - "User roles and permissions"
+
+          task_15_1_2:
+            name: "Database migration scripts"
+            complexity:
+              composite: 3.2
+            estimated_days: 2
+            deliverables:
+              - "Alembic migration: SQLite schema → PostgreSQL"
+              - "Data migration: export SQLite, import to PostgreSQL"
+              - "Validate data integrity post-migration"
+
+          task_15_1_3:
+            name: "Connection pooling and optimization"
+            complexity:
+              composite: 3.0
+            estimated_days: 0.5
+            deliverables:
+              - "Connection pooling: pgbouncer or SQLAlchemy pool"
+              - "Index optimization: add indexes on frequently queried columns"
+              - "Query performance testing"
+
+        feature_15_2:
+          name: "AWS/GCP Deployment"
+          complexity:
+            composite: 3.8
+            dimensions:
+              technical_complexity: 4
+              scope_size: 4
+              dependencies: 4
+              uncertainty: 4
+              risk: 4
+              testing: 3
+          estimated_days: 8
+          deliverables:
+            - "Containerized application (Docker)"
+            - "Deployment on AWS EC2 or GCP Compute Engine"
+            - "Load balancer and auto-scaling"
+
+          task_15_2_1:
+            name: "Dockerize application"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Dockerfile: multi-stage build (Python 3.11, build123d, ezdxf)"
+              - "Docker Compose: app + PostgreSQL + Redis"
+              - "Image size optimization: <500MB"
+
+          task_15_2_2:
+            name: "Deploy to cloud (EC2/Compute Engine)"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (4) and dependencies (4) - cloud deployment requires networking, security groups, IAM"
+            estimated_days: 4
+            deliverables:
+              - "Provision VM: t3.medium (AWS) or n1-standard-2 (GCP)"
+              - "Install Docker, deploy containers"
+              - "Configure security groups: allow 80/443, SSH from admin IP"
+            status: "flagged_for_breakdown"
+
+          task_15_2_3:
+            name: "Load balancer and auto-scaling"
+            complexity:
+              composite: 4.5
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (5) - requires cloud-specific knowledge (ALB/GCP LB, ASG)"
+            estimated_days: 2
+            deliverables:
+              - "Application Load Balancer (AWS ALB) or GCP Load Balancer"
+              - "Auto-scaling group: scale 1-3 instances based on CPU"
+              - "Health checks: /health endpoint"
+            status: "flagged_for_breakdown"
+
+        feature_15_3:
+          name: "Monitoring & Logging"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 3
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "Application monitoring: Prometheus + Grafana"
+            - "Error tracking: Sentry"
+            - "Centralized logging: CloudWatch or Stackdriver"
+
+          task_15_3_1:
+            name: "Setup Prometheus and Grafana"
+            complexity:
+              composite: 3.5
+            estimated_days: 2.5
+            deliverables:
+              - "Prometheus scraping metrics from /metrics endpoint"
+              - "Grafana dashboards: request rate, latency, error rate, CPU/memory"
+              - "Alerts: high error rate (>5%), high latency (>5s)"
+
+          task_15_3_2:
+            name: "Integrate Sentry for error tracking"
+            complexity:
+              composite: 3.0
+            estimated_days: 1.5
+            deliverables:
+              - "Sentry SDK integration: capture exceptions"
+              - "Error grouping and prioritization"
+              - "Notification: Slack alert on critical errors"
+
+          task_15_3_3:
+            name: "Centralized logging"
+            complexity:
+              composite: 3.8
+            estimated_days: 1
+            deliverables:
+              - "Log aggregation: AWS CloudWatch Logs or GCP Stackdriver"
+              - "Structured logging: JSON format with request ID"
+              - "Log retention: 30 days"
+
+        feature_15_4:
+          name: "Backup & Disaster Recovery"
+          complexity:
+            composite: 3.5
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 4
+              testing: 4
+          estimated_days: 4
+          deliverables:
+            - "Automated database backups: daily full, hourly incremental"
+            - "File storage backups: S3 or Google Cloud Storage"
+            - "Disaster recovery plan with RTO <4 hours"
+
+          task_15_4_1:
+            name: "Database backup automation"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "Daily full backup: pg_dump to S3/GCS"
+              - "Hourly WAL archiving for point-in-time recovery"
+              - "Backup retention: 7 daily, 4 weekly, 3 monthly"
+
+          task_15_4_2:
+            name: "File storage backups"
+            complexity:
+              composite: 3.0
+            estimated_days: 1
+            deliverables:
+              - "Mirror outputs/ directory to S3/GCS"
+              - "Versioning enabled for accidental deletions"
+              - "Lifecycle policy: delete after 90 days"
+
+          task_15_4_3:
+            name: "Disaster recovery testing"
+            complexity:
+              composite: 4.0
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High risk (4) and testing complexity (4) - requires simulating failures and validating recovery procedures"
+            estimated_days: 1
+            deliverables:
+              - "DR runbook: step-by-step recovery procedures"
+              - "Test DR quarterly: restore from backup, verify data"
+              - "RTO (Recovery Time Objective): <4 hours"
+            status: "flagged_for_breakdown"
+
+agent_blueprint:
+  total_estimated: 12
+  parallel_capacity: 4
+  types_needed:
+    - type: "cad-engine-dev"
+      count: 3
+      focus_areas: ["build123d", "ezdxf", "template system", "STEP/DXF export"]
+    - type: "validation-dev"
+      count: 2
+      focus_areas: ["AS 1100 validators", "compliance scoring", "automated correction"]
+    - type: "llm-integration-dev"
+      count: 2
+      focus_areas: ["Claude Haiku API", "prompt engineering", "confidence scoring"]
+    - type: "fullstack-dev"
+      count: 3
+      focus_areas: ["FastAPI backend", "React frontend", "database"]
+    - type: "devops-engineer"
+      count: 2
+      focus_areas: ["Docker", "AWS/GCP", "monitoring", "CI/CD"]
+
+testing_strategy:
+  levels:
+    - level: "unit"
+      scope: "Validators, template classes, utilities, parameter validation"
+      target_coverage: "80%+"
+    - level: "integration"
+      scope: "End-to-end template generation, LLM extraction → validation, web UI → backend"
+      target_coverage: "Key workflows"
+    - level: "system"
+      scope: "Full user journeys: specification → CAD generation → compliance report"
+      target_coverage: "Happy paths + error cases"
+    - level: "acceptance"
+      scope: "Pilot testing with 10 users, AS 1100 compliance verification by engineer"
+      target_coverage: "User satisfaction >80%"
+
+project_structure:
+  pattern: "vertical-slice"
+  rationale: "Templates are independent slices (mounting_bracket/, plate/, shaft/), validators are sliced by AS 1100 section (sheet_layout/, line_standards/, dimensioning/), LLM integration is isolated. Enables parallel development with minimal merge conflicts."
+  directories:
+    - path: "specs/"
+      purpose: "Architectural documentation, BLUEPRINT.yaml"
+    - path: "cad_engine/"
+      purpose: "Template system, build123d/ezdxf wrappers"
+    - path: "cad_engine/templates/"
+      purpose: "Individual template implementations (mounting_bracket.py, plate.py, ...)"
+    - path: "validators/"
+      purpose: "AS 1100 compliance validators"
+    - path: "llm/"
+      purpose: "LLM integration (Claude Haiku, Zoo API)"
+    - path: "api/"
+      purpose: "FastAPI backend"
+    - path: "frontend/"
+      purpose: "React web UI"
+    - path: "cli/"
+      purpose: "CLI interface"
+    - path: "db/"
+      purpose: "Database models and migrations"
+    - path: "tests/"
+      purpose: "Unit, integration, system tests"
+    - path: "docs/"
+      purpose: "User documentation, AS 1100 reference, template guides"
